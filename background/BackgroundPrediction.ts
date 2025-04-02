@@ -17,6 +17,7 @@ TaskManager.defineTask(BACKGROUND_PREDICTION_TASK, async () => {
 
     if (prediction !== null) {
       await savePredictionExternally(prediction);
+      console.log('Prediction Saved')
     }
 
     return BackgroundFetch.BackgroundFetchResult.NewData;
