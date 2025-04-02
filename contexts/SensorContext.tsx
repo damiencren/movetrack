@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
+export async function savePredictionExternally(prediction: any) {
+  console.log("Prédiction enregistrée en background :", prediction);
+}
+
+
 type SensorContextType = {
   gesture: { name: string | null, timestamp: number }
   updatePrediction: (gestureIndex: string | null) => void;
