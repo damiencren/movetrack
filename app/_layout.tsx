@@ -14,6 +14,28 @@ import "../global.css"
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+import * as BackgroundFetch from 'expo-background-fetch';
+import { BACKGROUND_PREDICTION_TASK } from '../background/BackgroundPrediction';
+
+async function registerBackgroundTask() {
+  const status = await BackgroundFetch.getStatusAsync();
+  if (status === BackgroundFetch.BackgroundFetchStatus.Available) {
+    await BackgroundFetch.registerTaskAsync(BACKGROUND_PREDICTION_TASK, {
+      minimumInterval: 60, // 60s minimum — ajustable
+      stopOnTerminate: false,
+      startOnBoot: true,
+    });
+    console.log('Tâche en arrière-plan enregistrée');
+  } else {
+    console.warn('Background fetch non disponible :', status);
+  }
+}
+
+useEffect(() => {
+  registerBackgroundTask();
+}, []);
+
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
