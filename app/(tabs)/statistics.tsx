@@ -1,109 +1,167 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Platform,
+  StatusBar,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+type Activity = {
+  name: string;
+  duration: number; // en secondes
+};
 
-export default function TabTwoScreen() {
+export default function StatisticsScreen() {
+  const [top3, setTop3] = useState<Activity[]>([]);
+  const [others, setOthers] = useState<Activity[]>([]);
+  const [showOthers, setShowOthers] = useState(false);
+
+  const placeStyles = ['place1', 'place2', 'place3'] as const;
+
+  useEffect(() => {
+    const top: Activity[] = [
+      { name: 'Marche', duration: 5400 },
+      { name: 'Assis', duration: 4200 },
+      { name: 'Course', duration: 3000 },
+    ];
+  
+    const other: Activity[] = [
+      { name: 'Monte escalier', duration: 1800 },
+      { name: 'Descente escalier', duration: 1200 },
+      { name: 'Repos', duration: 900 },
+      { name: 'Vélo', duration: 800 },
+      { name: 'Yoga', duration: 700 },
+      { name: 'Natation', duration: 600 },
+      { name: 'Musculation', duration: 500 },
+      { name: 'Etirements', duration: 400 },
+      { name: 'Danse', duration: 300 },
+      { name: 'Aviron', duration: 200 },
+    ];
+  
+    // Tri décroissant
+    other.sort((a, b) => b.duration - a.duration);
+  
+    setTop3(top);
+    setOthers(other);
+  }, []);
+  
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Top 3 Activités</Text>
+
+        <View style={styles.podium}>
+          {top3.map((activity, index) => (
+            <View
+              key={index}
+              style={[styles.podiumBlock, styles[placeStyles[index]]]}
+            >
+              <Text style={styles.activityName}>{activity.name}</Text>
+              <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity onPress={() => setShowOthers(!showOthers)} style={styles.toggleButton}>
+          <Text style={styles.toggleButtonText}>
+            {showOthers ? 'Cacher les autres activités' : 'Voir toutes les autres activités'}
+          </Text>
+        </TouchableOpacity>
+
+        {showOthers && (
+          <View style={styles.othersContainer}>
+            {others.map((activity, index) => (
+              <View key={index} style={styles.otherItem}>
+                <Text style={styles.activityName}>{activity.name}</Text>
+                <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+function formatTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  return `${h > 0 ? `${h}h ` : ''}${m > 0 ? `${m}m ` : ''}${s}s`;
+}
+
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  titleContainer: {
+  container: {
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  podium: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    marginTop: 16,
+  },
+  podiumBlock: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    padding: 8,
+    width: 80,
+    borderRadius: 12,
+  },
+  activityName: {
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#555',
+    textAlign: 'center',
+  },
+  place1: {
+    height: 120,
+    backgroundColor: '#FFD700',
+  },
+  place2: {
+    height: 90,
+    backgroundColor: '#C0C0C0',
+  },
+  place3: {
+    height: 70,
+    backgroundColor: '#CD7F32',
+  },
+  toggleButton: {
+    marginTop: 24,
+    marginBottom: 12,
+    backgroundColor: '#eee',
+    padding: 12,
+    borderRadius: 8,
+  },
+  toggleButtonText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  othersContainer: {
+    marginTop: 12,
+  },
+  otherItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
 });
