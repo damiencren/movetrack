@@ -7,12 +7,11 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { SensorProvider } from '../contexts/SensorContext';
 import SensorManager from '../components/SensorManager';
-import { initializeDatabase } from '@/hooks/useDatabase';
-
 
 import "../global.css"
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ModelControlProvider } from '@/contexts/ModelControlContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,14 +24,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function prepare() {
-      try {
-        await initializeDatabase();
-      } catch (e) {
-        console.error('Error initializing database:', e);
-      } finally {
-        if (loaded) {
-          SplashScreen.hideAsync();
-        }
+      if (loaded) {
+        SplashScreen.hideAsync();
       }
     }
     prepare();
@@ -44,14 +37,16 @@ export default function RootLayout() {
 
   return (
     <SensorProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <SensorManager />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <ModelControlProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <SensorManager />
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </ModelControlProvider>
     </SensorProvider>
   );
 }

@@ -1,35 +1,28 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 type SensorContextType = {
-  gesture: string | null;
-  updatePrediction: (gestureIndex: number | null) => void;
+  gesture: { name: string | null, timestamp: number }
+  updatePrediction: (gestureIndex: string | null) => void;
 };
 
 const SensorContext = createContext<SensorContextType>({
-  gesture: null,
+  gesture: { name: null, timestamp: Date.now() },
   updatePrediction: () => { },
 });
 
 export const useSensor = () => useContext(SensorContext);
 
 export const SensorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [predictedGesture, setPredictedGesture] = useState<number | null>(null);
-  const gestures = [
-    'WALKING',
-    'WALKING_UPSTAIRS',
-    'WALKING_DOWNSTAIRS',
-    'SITTING',
-    'STANDING',
-    'LAYING'
-  ];
+  const [predictedGesture, setPredictedGesture] = useState<{ name: string | null, timestamp: number }>({ name: null, timestamp: Date.now() });
 
-  const updatePrediction = useCallback((gestureIndex: number | null) => {
-    setPredictedGesture(gestureIndex);
+  const updatePrediction = useCallback((name: string | null) => {
+    console.log('Predicted gesture:', name);
+    setPredictedGesture({ name, timestamp: Date.now() });
   }, []);
 
   return (
     <SensorContext.Provider value={{
-      gesture: predictedGesture !== null ? gestures[predictedGesture] : null,
+      gesture: predictedGesture,
       updatePrediction
     }}>
       {children}

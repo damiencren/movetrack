@@ -3,6 +3,7 @@ import { Accelerometer, Gyroscope, AccelerometerMeasurement } from 'expo-sensors
 import ButterworthFilter from './butterworthFilter';
 import * as tf from '@tensorflow/tfjs';
 import { bundleResourceIO } from '@tensorflow/tfjs-react-native';
+import { useModelControl } from '@/contexts/ModelControlContext';
 
 const useSensorPrediction = (modelConfig: {
     modelJson: any;
@@ -13,6 +14,8 @@ const useSensorPrediction = (modelConfig: {
     const bufferLock = useRef(false);
     const modelRef = useRef<tf.GraphModel | null>(null);
     const gyroData = useRef({ x: 0, y: 0, z: 0 });
+
+    const { isRunning } = useModelControl();
 
     // Initialisation des filtres
     const gravityFilter = useRef({
@@ -101,6 +104,7 @@ const useSensorPrediction = (modelConfig: {
 
     // Initialisation
     useEffect(() => {
+        if (!isRunning) return;
         loadModel();
         Accelerometer.setUpdateInterval(20);
         Gyroscope.setUpdateInterval(20);
@@ -114,7 +118,7 @@ const useSensorPrediction = (modelConfig: {
             accelerometerSub.remove();
             gyroscopeSub.remove();
         };
-    }, [handleAccelerometer, loadModel]);
+    }, [isRunning]);
 
     return { predict };
 };
