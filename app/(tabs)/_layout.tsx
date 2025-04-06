@@ -1,12 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
-
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -14,7 +15,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#1a434e',
+        tabBarInactiveTintColor: '#687076',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
@@ -43,8 +45,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="prediction"
         options={{
-          title: 'Prediction',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarLabel: 'Prédiction',
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome5 name="brain" size={24} color={color} />
+          ),
         }}
       />
     </Tabs>
