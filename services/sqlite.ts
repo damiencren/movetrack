@@ -32,6 +32,14 @@ class DatabaseService {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS positions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
     } catch (error) {
       console.error('Erreur lors de la création des tables :', error);
     }
@@ -74,6 +82,33 @@ class DatabaseService {
       await this.db.runAsync('DELETE FROM gestures;');
     } catch (error) {
       console.error('Erreur lors de la suppression des éléments :', error);
+    }
+  }
+
+  public async addPosition(latitude: number, longitude: number) {
+    if (!this.db) {
+      console.error('La base de données n\'est pas initialisée.');
+      return;
+    }
+    try {
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude) VALUES (?, ?);', [latitude, longitude]);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la position :', error);
+    }
+  }
+  public async getAllPositions(): Promise<{ id: number; latitude: number; longitude: number; created_at : string ;}[]> {
+    if (!this.db) {
+      console.error('La base de données n\'est pas initialisée.');
+      return [];
+    }
+    try {
+      const results = await this.db.getAllAsync<{ id: number; latitude: number; longitude: number; created_at : string;}>(
+        'SELECT * FROM positions;'
+      );
+      return results;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des positions :', error);
+      return [];
     }
   }
 }
