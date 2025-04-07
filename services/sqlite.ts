@@ -32,6 +32,14 @@ class DatabaseService {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `);
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS positions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          latitude REAL NOT NULL,
+          longitude REAL NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
     } catch (error) {
       console.error('Erreur lors de la création des tables :', error);
     }
@@ -49,13 +57,13 @@ class DatabaseService {
     }
   }
 
-  public async getGestures(): Promise<{ id: number; gesture: string; created_at : string ;}[]> {
+  public async getGestures(): Promise<{ id: number; gesture: string; created_at: string; }[]> {
     if (!this.db) {
       console.error('La base de données n\'est pas initialisée.');
       return [];
     }
     try {
-      const results = await this.db.getAllAsync<{ id: number; gesture: string; created_at : string;}>(
+      const results = await this.db.getAllAsync<{ id: number; gesture: string; created_at: string; }>(
         'SELECT * FROM gestures;'
       );
       return results;
@@ -77,18 +85,30 @@ class DatabaseService {
     }
   }
 
+  public async addPosition(latitude: number, longitude: number) {
+    if (!this.db) {
+      console.error('La base de données n\'est pas initialisée.');
+      return;
+    }
+    try {
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude) VALUES (?, ?);', [latitude, longitude]);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la position :', error);
+    }
+  }
+
   public async getActivitySummaryByPeriod(
     period: 'day' | 'week' | 'month'
   ): Promise<{ name: string; duration: number }[]> {
+
     if (!this.db) {
       console.error('La base de données n\'est pas initialisée.');
       return [];
     }
-  
     try {
       let dateCondition = '';
       let divisor = 1;
-  
+
       if (period === 'day') {
         dateCondition = "DATE(created_at) = DATE('now')";
         divisor = 1;
@@ -99,7 +119,7 @@ class DatabaseService {
         dateCondition = "DATE(created_at) >= DATE('now', '-29 days')";
         divisor = 30;
       }
-  
+
       const results = await this.db.getAllAsync<{
         gesture: string;
         count: number;
@@ -110,7 +130,7 @@ class DatabaseService {
          GROUP BY gesture
          ORDER BY count DESC;`
       );
-  
+
       return results.map(r => ({
         name: r.gesture,
         duration: Math.round((r.count * 3) / divisor), // 3s * count, moyenné
@@ -120,11 +140,24 @@ class DatabaseService {
       return [];
     }
   }
-  
-  
+
+  public async getAllPositions(): Promise<{ id: number; latitude: number; longitude: number; created_at: string; }[]> {
+    if (!this.db) {
+      console.error('La base de données n\'est pas initialisée.');
+      return [];
+    }
+
+    try {
+      const results = await this.db.getAllAsync<{ id: number; latitude: number; longitude: number; created_at: string; }>(
+        'SELECT * FROM positions;'
+      );
+      return results;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des positions :', error);
+      return [];
+    }
+  }
 }
-
-
 
 
 
