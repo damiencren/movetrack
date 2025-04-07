@@ -4,10 +4,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import * as Location from 'expo-location';
 import 'react-native-reanimated';
 import { SensorProvider } from '../contexts/SensorContext';
 import SensorManager from '../components/SensorManager';
 import { registerBackgroundFetch } from '../services/backgroundTask';
+import DatabaseService from '@/services/sqlite'; // Import the DatabaseService
 
 
 import "../global.css"
@@ -35,10 +37,36 @@ export default function RootLayout() {
     async function prepare() {
       if (loaded) {
         SplashScreen.hideAsync();
+
+        const logPosition = async () => {
+          try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+              console.error('Location permission not granted');
+              return;
+            }
+
+            const location = await Location.getCurrentPositionAsync({});
+            await DatabaseService.addPosition(location.coords.latitude, location.coords.longitude);
+            
+          } catch (error) {
+            console.error('Error fetching location:', error);
+          }
+        };
+
+        // Log position immediately and then every 5 seconds
+        logPosition();
+        const interval = setInterval(() => {
+          logPosition();
+        }, 5000);
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(interval);
       }
     }
     prepare();
   }, [loaded]);
+
 
   if (!loaded) {
     return null;
