@@ -19,6 +19,8 @@ import { ModelControlProvider } from '@/contexts/ModelControlContext';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+import GeolocationService from '@/services/geolocalisationservice';
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
@@ -30,35 +32,18 @@ export default function RootLayout() {
       if (loaded) {
         SplashScreen.hideAsync();
 
-        const logPosition = async () => {
-          try {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-              console.error('Location permission not granted');
-              return;
-            }
-
-            const location = await Location.getCurrentPositionAsync({});
-            await DatabaseService.addPosition(location.coords.latitude, location.coords.longitude);
-            
-          } catch (error) {
-            console.error('Error fetching location:', error);
-          }
-        };
-
-        // Log position immediately and then every 5 seconds
-        logPosition();
-        const interval = setInterval(() => {
-          logPosition();
-        }, 5000);
-
-        // Cleanup interval on component unmount
-        return () => clearInterval(interval);
+        // Start geolocation logging
+        await GeolocationService.startLogging(5000); // Log every 5 seconds
       }
     }
-    prepare();
-  }, [loaded]);
 
+    prepare();
+
+    // Cleanup on unmount
+    return () => {
+      GeolocationService.stopLogging();
+    };
+  }, [loaded]);
 
   if (!loaded) {
     return null;
