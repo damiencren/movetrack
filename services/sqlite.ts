@@ -11,9 +11,12 @@ class DatabaseService {
     try {
       console.log('Initialisation de la base de données...');
       this.db = await SQLite.openDatabaseAsync('myDatabase.db');
+      this.dropTables(); // Uncomment this line to drop tables on each init (for testing purposes)
+
       console.log('Base de données initialisée avec succès !');
 
       await this.createTables();
+      this.addFakeData(); // Uncomment this line to add fake data
     } catch (error) {
       console.error('Erreur lors de l\'initialisation de la base de données :', error);
     }
@@ -45,13 +48,34 @@ class DatabaseService {
     }
   }
 
-  public async addGesture(gesture: string) {
+  public async dropTables() {
     if (!this.db) {
       console.error('La base de données n\'est pas initialisée.');
       return;
     }
     try {
-      await this.db.runAsync('INSERT INTO gestures (gesture) VALUES (?);', [gesture]);
+      await this.db.execAsync('DROP TABLE IF EXISTS gestures;');
+      await this.db.execAsync('DROP TABLE IF EXISTS positions;');
+      console.log('Tables supprimées avec succès.');
+    } catch (error) {
+      console.error('Erreur lors de la suppression des tables :', error);
+    }
+  }
+
+  public async addGesture(gesture: string, createdAt?: string) {
+    if (!this.db) {
+      console.error('La base de données n\'est pas initialisée.');
+      return;
+    }
+    try {
+      if (createdAt) {
+        await this.db.runAsync(
+          'INSERT INTO gestures (gesture, created_at) VALUES (?, ?);',
+          [gesture, createdAt]
+        );
+      } else {
+        await this.db.runAsync('INSERT INTO gestures (gesture) VALUES (?);', [gesture]);
+      }
     } catch (error) {
       console.error('Erreur lors de l\'ajout de l\'élément :', error);
     }
@@ -85,13 +109,23 @@ class DatabaseService {
     }
   }
 
-  public async addPosition(latitude: number, longitude: number) {
+  public async addPosition(latitude: number, longitude: number, createdAt?: string) {
     if (!this.db) {
       console.error('La base de données n\'est pas initialisée.');
       return;
     }
     try {
-      await this.db.runAsync('INSERT INTO positions (latitude, longitude) VALUES (?, ?);', [latitude, longitude]);
+      if (createdAt) {
+        await this.db.runAsync(
+          'INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);',
+          [latitude, longitude, createdAt]
+        );
+      } else {
+        await this.db.runAsync(
+          'INSERT INTO positions (latitude, longitude) VALUES (?, ?);',
+          [latitude, longitude]
+        );
+      }
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la position :', error);
     }
@@ -157,8 +191,99 @@ class DatabaseService {
       return [];
     }
   }
+
+  public async addFakeData() {
+    if (!this.db) {
+      console.error('La base de données n\'est pas initialisée.');
+      return;
+    }
+  
+    try {
+      // Inserting gesture "WALKING"
+      await this.db.runAsync('INSERT INTO gestures (gesture, created_at) VALUES (?, ?);', [
+        'WALKING',
+        '2025-04-01T10:00:00Z', // Start date for WALKING gesture
+      ]);
+      
+      // Inserting positions for "WALKING"
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0001, -71.0669905 + 0.0001, '2025-04-01T10:00:00Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0002, -71.0669905 - 0.0001, '2025-04-01T10:00:05Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.0001, -71.0669905 + 0.0002, '2025-04-01T10:00:10Z',
+      ]);
+      await this.db.runAsync('INSERT INTO gestures (gesture, created_at) VALUES (?, ?);', [
+        'LAYING',
+        '2025-04-01T10:00:11Z', // Start date for WALKING gesture
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.00015, -71.0669905 - 0.00005, '2025-04-01T10:00:15Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.0001, -71.0669905 - 0.00015, '2025-04-01T10:00:20Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.00005, -71.0669905 + 0.00005, '2025-04-01T10:00:25Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0001, -71.0669905 - 0.0001, '2025-04-01T10:00:30Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.00005, -71.0669905 + 0.0001, '2025-04-01T10:00:35Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0001, -71.0669905 + 0.0001, '2025-04-01T10:00:40Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.00015, -71.0669905 - 0.00005, '2025-04-01T10:00:45Z',
+      ]);
+  
+      // Inserting gesture "STANDING"
+      await this.db.runAsync('INSERT INTO gestures (gesture, created_at) VALUES (?, ?);', [
+        'STANDING',
+        '2025-04-01T10:05:00Z', // Start date for STANDING gesture
+      ]);
+  
+      // Inserting positions for "STANDING"
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.00005, -71.0669905 - 0.00005, '2025-04-01T10:05:00Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.0001, -71.0669905 + 0.00005, '2025-04-01T10:05:05Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0001, -71.0669905 - 0.0001, '2025-04-01T10:05:10Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.00015, -71.0669905 + 0.0001, '2025-04-01T10:05:15Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0002, -71.0669905 - 0.00005, '2025-04-01T10:05:20Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.0001, -71.0669905 + 0.0002, '2025-04-01T10:05:25Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.00005, -71.0669905 - 0.0001, '2025-04-01T10:05:30Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0001, -71.0669905 + 0.00015, '2025-04-01T10:05:35Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 - 0.00005, -71.0669905 - 0.00005, '2025-04-01T10:05:40Z',
+      ]);
+      await this.db.runAsync('INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);', [
+        48.4074286 + 0.0001, -71.0669905 + 0.0001, '2025-04-01T10:05:45Z',
+      ]);
+  
+      console.log('Fake data added successfully!');
+    } catch (error) {
+      console.error('Error adding fake data:', error);
+    }
+  }
 }
-
-
 
 export default new DatabaseService();
