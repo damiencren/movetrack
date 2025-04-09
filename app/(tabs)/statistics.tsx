@@ -9,52 +9,42 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import db from '@/services/sqlite';
 
-type Activity = {
-  name: string;
-  duration: number; // en secondes
-};
+type Activity = { name: string; duration: number };
+type Period = 'day' | 'week' | 'month';
 
 export default function StatisticsScreen() {
   const [top3, setTop3] = useState<Activity[]>([]);
   const [others, setOthers] = useState<Activity[]>([]);
   const [showOthers, setShowOthers] = useState(false);
+  const [period, setPeriod] = useState<Period>('day');
 
   const placeStyles = ['place1', 'place2', 'place3'] as const;
 
   useEffect(() => {
-    const top: Activity[] = [
-      { name: 'Marche', duration: 5400 },
-      { name: 'Assis', duration: 4200 },
-      { name: 'Course', duration: 3000 },
-    ];
-  
-    const other: Activity[] = [
-      { name: 'Monte escalier', duration: 1800 },
-      { name: 'Descente escalier', duration: 1200 },
-      { name: 'Repos', duration: 900 },
-      { name: 'Vélo', duration: 800 },
-      { name: 'Yoga', duration: 700 },
-      { name: 'Natation', duration: 600 },
-      { name: 'Musculation', duration: 500 },
-      { name: 'Etirements', duration: 400 },
-      { name: 'Danse', duration: 300 },
-      { name: 'Aviron', duration: 200 },
-    ];
-  
-    // Tri décroissant
-    other.sort((a, b) => b.duration - a.duration);
-  
-    setTop3(top);
-    setOthers(other);
-  }, []);
-  
+    const fetchData = async () => {
+      const data = await db.getActivitySummaryByPeriod(period);
+      setTop3(data.slice(0, 3));
+      setOthers(data.slice(3));
+    };
+    fetchData();
+  }, [period]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.container}>
+        {/* Titre */}
         <Text style={styles.title}>Top 3 Activités</Text>
 
+        {/* Tabs en dessous du titre */}
+        <View style={styles.tabs}>
+          <PeriodTab label="Jour" value="day" current={period} onPress={setPeriod} />
+          <PeriodTab label="Semaine" value="week" current={period} onPress={setPeriod} />
+          <PeriodTab label="Mois" value="month" current={period} onPress={setPeriod} />
+        </View>
+
+        {/* Podium */}
         <View style={styles.podium}>
           {top3.map((activity, index) => (
             <View
@@ -67,27 +57,32 @@ export default function StatisticsScreen() {
           ))}
         </View>
 
+        {/* Toggle bouton */}
         <TouchableOpacity onPress={() => setShowOthers(!showOthers)} style={styles.toggleButton}>
           <Text style={styles.toggleButtonText}>
             {showOthers ? 'Cacher les autres activités' : 'Voir toutes les autres activités'}
           </Text>
         </TouchableOpacity>
 
+        {/* ScrollView pour autres activités uniquement */}
         {showOthers && (
-          <View style={styles.othersContainer}>
-            {others.map((activity, index) => (
-              <View key={index} style={styles.otherItem}>
-                <Text style={styles.activityName}>{activity.name}</Text>
-                <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
-              </View>
-            ))}
-          </View>
+          <ScrollView style={styles.othersScroll} nestedScrollEnabled>
+            <View style={styles.othersContainer}>
+              {others.map((activity, index) => (
+                <View key={index} style={styles.otherItem}>
+                  <Text style={styles.activityName}>{activity.name}</Text>
+                  <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
         )}
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
+// Format durée
 function formatTime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -95,6 +90,32 @@ function formatTime(seconds: number): string {
   return `${h > 0 ? `${h}h ` : ''}${m > 0 ? `${m}m ` : ''}${s}s`;
 }
 
+// Tab période
+function PeriodTab({
+  label,
+  value,
+  current,
+  onPress,
+}: {
+  label: string;
+  value: Period;
+  current: Period;
+  onPress: (p: Period) => void;
+}) {
+  const selected = current === value;
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(value)}
+      style={[styles.tabButton, selected && styles.tabSelected]}
+    >
+      <Text style={[styles.tabText, selected && styles.tabTextSelected]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+// Styles
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -102,19 +123,42 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
+    flex: 1,
     padding: 16,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 12,
+    fontSize: 22,
     fontWeight: 'bold',
-    textAlign: 'center',
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tabButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+  },
+  tabSelected: {
+    backgroundColor: '#007AFF',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  tabTextSelected: {
+    color: '#fff',
+    fontWeight: '600',
   },
   podium: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-end',
-    marginTop: 16,
+    marginBottom: 20,
   },
   podiumBlock: {
     alignItems: 'center',
@@ -145,7 +189,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#CD7F32',
   },
   toggleButton: {
-    marginTop: 24,
     marginBottom: 12,
     backgroundColor: '#eee',
     padding: 12,
@@ -156,8 +199,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
+  othersScroll: {
+    maxHeight: 200,
+  },
   othersContainer: {
-    marginTop: 12,
+    paddingBottom: 8,
   },
   otherItem: {
     paddingVertical: 8,
