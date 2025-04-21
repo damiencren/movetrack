@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Button, Platform, TouchableOpacity } from 'react-native';
-import MapView, { Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DatabaseService from '@/services/sqlite';
 
@@ -13,18 +13,22 @@ const gestureColors: { [key: string]: string } = {
   LAYING: 'brown',
 };
 
+function findClosestPosition(gestureTime: string, positions: any[]) {
+  const gestureDate = new Date(gestureTime);
+  return positions.reduce((prev, curr) =>
+    Math.abs(new Date(curr.created_at).getTime() - gestureDate.getTime()) <
+    Math.abs(new Date(prev.created_at).getTime() - gestureDate.getTime())
+      ? curr
+      : prev
+  );
+}
+
 export default function MapScreen() {
   const [gestures, setGestures] = useState<any[]>([]);
   const [positions, setPositions] = useState<any[]>([]);
-  const [gesturePaths, setGesturePaths] = useState<
-    { gesture: string; color: string; coordinates: { latitude: number; longitude: number }[] }[]
-  >([]);
-  const [filteredPaths, setFilteredPaths] = useState<
-    { gesture: string; color: string; coordinates: { latitude: number; longitude: number }[] }[]
-  >([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Default to today's date
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showLegend, setShowLegend] = useState(false); // State to toggle legend visibility
+  const [showLegend, setShowLegend] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,85 +38,25 @@ export default function MapScreen() {
 
         setGestures(fetchedGestures);
         setPositions(fetchedPositions);
-
-        processGesturePaths(fetchedGestures, fetchedPositions);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-    console.log('fetchedGestures:', gestures); // Log the fetched gestures
-    console.log('fetchedPositions:', positions); // Log the fetched positions
+
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (selectedDate) {
-      filterPathsByDate(selectedDate);
-    } else {
-      setFilteredPaths(gesturePaths);
-    }
-  }, [selectedDate, gesturePaths]);
+  const filteredGestures = selectedDate
+    ? gestures.filter((g) =>
+        g.created_at.startsWith(selectedDate.toISOString().split('T')[0])
+      )
+    : gestures;
 
-  const processGesturePaths = (gestures: any[], positions: any[]) => {
-    const paths: {
-      gesture: string;
-      color: string;
-      coordinates: { latitude: number; longitude: number }[];
-    }[] = [];
-
-    gestures.forEach((gesture, i) => {
-      const startTime = new Date(gesture.created_at).getTime();
-      const endTime =
-        i + 1 < gestures.length
-          ? new Date(gestures[i + 1].created_at).getTime()
-          : Infinity;
-
-      const gesturePositions = positions.filter((position) => {
-        const time = new Date(position.created_at).getTime();
-        return time >= startTime && time < endTime;
-      });
-
-      if (gesturePositions.length > 1) {
-        // Create a separate path for each gesture segment
-        for (let j = 0; j < gesturePositions.length - 1; j++) {
-          paths.push({
-            gesture: gesture.gesture,
-            color: gestureColors[gesture.gesture] || 'gray', // Use predefined color or default to gray
-            coordinates: [
-              {
-                latitude: gesturePositions[j].latitude,
-                longitude: gesturePositions[j].longitude,
-              },
-              {
-                latitude: gesturePositions[j + 1].latitude,
-                longitude: gesturePositions[j + 1].longitude,
-              },
-            ],
-          });
-        }
-      }
-    });
-
-    setGesturePaths(paths);
-
-  };
-
-  const filterPathsByDate = (date: Date) => {
-    const formattedDate = date.toISOString().split('T')[0];
-    const filtered = gesturePaths.filter((path) =>
-      path.coordinates.some((coord) => {
-        const position = positions.find(
-          (pos) => pos.latitude === coord.latitude && pos.longitude === coord.longitude
-        );
-        return position && position.created_at.startsWith(formattedDate);
-      })
-    );
-    //log each path and its coordinates pretty
-    filtered.forEach((path) => {
-      console.log(`Gesture: ${path.gesture}, Coordinates:`, path.coordinates);
-    });
-    setFilteredPaths(filtered);
-  };
+  const filteredPositions = selectedDate
+    ? positions.filter((p) =>
+        p.created_at.startsWith(selectedDate.toISOString().split('T')[0])
+      )
+    : positions;
 
   return (
     <View style={styles.container}>
@@ -125,17 +69,38 @@ export default function MapScreen() {
           longitudeDelta: 0.05,
         }}
       >
-        {filteredPaths.map((path, index) => (
+        {/* Position trail polyline */}
+        {filteredPositions.length > 1 && (
           <Polyline
-            key={index}
-            coordinates={path.coordinates}
-            strokeColor={path.color}
-            strokeWidth={5}
+            coordinates={filteredPositions.map((pos) => ({
+              latitude: pos.latitude,
+              longitude: pos.longitude,
+            }))}
+            strokeColor="gray"
+            strokeWidth={3}
           />
-        ))}
+        )}
+
+        {/* Gesture markers */}
+        {filteredGestures.map((gesture, index) => {
+          const closestPos = findClosestPosition(gesture.created_at, filteredPositions);
+          if (!closestPos) return null;
+          return (
+            <Marker
+              key={index}
+              coordinate={{
+                latitude: closestPos.latitude,
+                longitude: closestPos.longitude,
+              }}
+              pinColor={gestureColors[gesture.gesture] || 'gray'}
+              title={gesture.gesture}
+              description={new Date(gesture.created_at).toLocaleTimeString()}
+            />
+          );
+        })}
       </MapView>
 
-      {/* Legend Toggle */}
+      {/* Toggle legend */}
       <TouchableOpacity
         style={styles.legendToggle}
         onPress={() => setShowLegend((prev) => !prev)}
@@ -143,7 +108,7 @@ export default function MapScreen() {
         <Text style={styles.legendToggleText}>{showLegend ? 'Hide Legend' : 'Show Legend'}</Text>
       </TouchableOpacity>
 
-      {/* Legend */}
+      {/* Legend display */}
       {showLegend && (
         <View style={styles.legendContainer}>
           <Text style={styles.legendTitle}>Legend</Text>
@@ -156,6 +121,7 @@ export default function MapScreen() {
         </View>
       )}
 
+      {/* Date picker */}
       <View style={styles.datePickerContainer}>
         <Button title="Select Date" onPress={() => setShowDatePicker(true)} />
         {selectedDate && <Text>Selected Date: {selectedDate.toDateString()}</Text>}
@@ -194,13 +160,13 @@ const styles = StyleSheet.create({
   },
   legendToggle: {
     position: 'absolute',
-    top: 60, // Adjusted to avoid overlap with the legend
+    top: 60,
     right: 20,
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 10,
-    elevation: 6, // Ensure it appears above the legend
-    zIndex: 2, // Higher zIndex to stay clickable
+    elevation: 6,
+    zIndex: 2,
   },
   legendToggleText: {
     fontWeight: 'bold',
@@ -214,7 +180,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     elevation: 5,
-    zIndex: 1, // Lower zIndex than the toggle button
+    zIndex: 1,
   },
   legendTitle: {
     fontWeight: 'bold',
