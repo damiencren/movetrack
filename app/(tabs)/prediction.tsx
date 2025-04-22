@@ -6,6 +6,7 @@ import DatabaseService from '../../services/sqlite';
 import classNames from 'classnames';
 
 const SensorTab = () => {
+
   const { gesture } = useSensor();
   const { isRunning, startModel, stopModel } = useModelControl();
   const [gestureData, setGestureData] = useState<{ id: number; gesture: string; created_at: string }[]>([]);
