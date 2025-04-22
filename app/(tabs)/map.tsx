@@ -17,10 +17,14 @@ const gestureColors: { [key: string]: string } = {
 
 
 function findClosestPosition(gestureTime: string, positions: any[]) {
+  if (!positions || positions.length === 0) {
+    return null; // Return null if positions array is empty
+  }
+
   const gestureDate = new Date(gestureTime);
   return positions.reduce((prev, curr) =>
     Math.abs(new Date(curr.created_at).getTime() - gestureDate.getTime()) <
-      Math.abs(new Date(prev.created_at).getTime() - gestureDate.getTime())
+    Math.abs(new Date(prev.created_at).getTime() - gestureDate.getTime())
       ? curr
       : prev
   );
@@ -64,89 +68,92 @@ export default function MapScreen() {
     )
     : positions;
 
-  return (
-    <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 48.4071146,
-          longitude: -71.0679955,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
-      >
-        {/* Position trail polyline */}
-        {filteredPositions.length > 1 && (
-          <Polyline
-            coordinates={filteredPositions.map((pos) => ({
-              latitude: pos.latitude,
-              longitude: pos.longitude,
-            }))}
-            strokeColor="gray"
-            strokeWidth={3}
-          />
-        )}
-
-        {/* Gesture markers */}
-        {filteredGestures.map((gesture, index) => {
-          const closestPos = findClosestPosition(gesture.created_at, filteredPositions);
-          if (!closestPos) return null;
-          return (
-            <Marker
-              key={index}
-              coordinate={{
-                latitude: closestPos.latitude,
-                longitude: closestPos.longitude,
-              }}
-              pinColor={gestureColors[gesture.gesture] || 'gray'}
-              title={gesture.gesture}
-              description={new Date(gesture.created_at).toLocaleTimeString()}
-            />
-          );
-        })}
-      </MapView>
-
-      {/* Toggle legend */}
-      <TouchableOpacity
-        style={styles.legendToggle}
-        onPress={() => setShowLegend((prev) => !prev)}
-      >
-        <Text style={styles.legendToggleText}>{showLegend ? 'Hide Legend' : 'Show Legend'}</Text>
-      </TouchableOpacity>
-
-      {/* Legend display */}
-      {showLegend && (
-        <View style={styles.legendContainer}>
-          <Text style={styles.legendTitle}>Legend</Text>
-          {Object.keys(gestureColors).map((gesture) => (
-            <View key={gesture} style={styles.legendItem}>
-              <View style={[styles.colorBox, { backgroundColor: gestureColors[gesture] }]} />
-              <Text>{gesture}</Text>
+  
+      return (
+        <View style={styles.container}>
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: 48.4071146,
+              longitude: -71.0679955,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            }}
+          >
+            {/* Position trail polyline */}
+            {filteredPositions.length > 1 && (
+              <Polyline
+                coordinates={filteredPositions.map((pos) => ({
+                  latitude: pos.latitude,
+                  longitude: pos.longitude,
+                }))}
+                strokeColor="gray"
+                strokeWidth={3}
+              />
+            )}
+    
+            {/* Gesture markers */}
+            {filteredGestures.map((gesture, index) => {
+              const closestPos = findClosestPosition(gesture.created_at, filteredPositions);
+              if (!closestPos) return null;
+    
+              // Convert UTC timestamp to local time
+              const localTime = new Date(gesture.created_at).toLocaleString(undefined, {
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              });
+    
+              return (
+                <Marker
+                  key={index}
+                  coordinate={{
+                    latitude: closestPos.latitude,
+                    longitude: closestPos.longitude,
+                  }}
+                  pinColor={gestureColors[gesture.gesture] || 'gray'}
+                  title={gesture.gesture}
+                  description={localTime} // Display local time
+                />
+              );
+            })}
+          </MapView>
+    
+          {/* Toggle legend */}
+          <TouchableOpacity
+            style={styles.legendToggle}
+            onPress={() => setShowLegend((prev) => !prev)}
+          >
+            <Text style={styles.legendToggleText}>{showLegend ? 'Hide Legend' : 'Show Legend'}</Text>
+          </TouchableOpacity>
+    
+          {/* Legend display */}
+          {showLegend && (
+            <View style={styles.legendContainer}>
+              <Text style={styles.legendTitle}>Legend</Text>
+              {Object.keys(gestureColors).map((gesture) => (
+                <View key={gesture} style={styles.legendItem}>
+                  <View style={[styles.colorBox, { backgroundColor: gestureColors[gesture] }]} />
+                  <Text>{gesture}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+          )}
+    
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate || new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(event, date) => {
+                if (date) setSelectedDate(date);
+              }}
+            />
+          )}
         </View>
-      )}
-
-      {/* Date picker */}
-      <View style={styles.datePickerContainer}>
-        <Button title="Select Date" onPress={() => setShowDatePicker(true)} />
-        {selectedDate && <Text>Selected Date: {selectedDate.toDateString()}</Text>}
-      </View>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate || new Date()}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
-          onChange={(event, date) => {
-            setShowDatePicker(false);
-            if (date) setSelectedDate(date);
-          }}
-        />
-      )}
-    </View>
-  );
-}
+      );
+    }
 
 const styles = StyleSheet.create({
   container: {
