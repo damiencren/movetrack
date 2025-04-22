@@ -69,7 +69,6 @@ class DatabaseService {
     }
     try {
       const date = createdAt ? new Date(createdAt) : new Date();
-      date.setHours(date.getHours() - 4); // Adjust to UTC-4
       const adjustedCreatedAt = date.toISOString();
   
       await this.db.runAsync(
@@ -116,7 +115,6 @@ class DatabaseService {
     }
     try {
       const date = createdAt ? new Date(createdAt) : new Date();
-      date.setHours(date.getHours() - 4); // Adjust to UTC-4
       const adjustedCreatedAt = date.toISOString();
   
       await this.db.runAsync(
