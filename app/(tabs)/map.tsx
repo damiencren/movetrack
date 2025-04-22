@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Button, Platform, TouchableOpacity } from 'reac
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DatabaseService from '@/services/sqlite';
+import { useSensor } from '@/contexts/SensorContext';
 
 const gestureColors: { [key: string]: string } = {
   WALKING: 'red',
@@ -13,11 +14,13 @@ const gestureColors: { [key: string]: string } = {
   LAYING: 'brown',
 };
 
+
+
 function findClosestPosition(gestureTime: string, positions: any[]) {
   const gestureDate = new Date(gestureTime);
   return positions.reduce((prev, curr) =>
     Math.abs(new Date(curr.created_at).getTime() - gestureDate.getTime()) <
-    Math.abs(new Date(prev.created_at).getTime() - gestureDate.getTime())
+      Math.abs(new Date(prev.created_at).getTime() - gestureDate.getTime())
       ? curr
       : prev
   );
@@ -29,33 +32,36 @@ export default function MapScreen() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
+  const { gesture } = useSensor();
+  const [gestureData, setGestureData] = useState<{ id: number; gesture: string; created_at: string }[]>([]);
+
+  const fetchData = async () => {
+    try {
+      const fetchedGestures = await DatabaseService.getGestures();
+      const fetchedPositions = await DatabaseService.getAllPositions();
+
+      setGestures(fetchedGestures);
+      setPositions(fetchedPositions);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fetchedGestures = await DatabaseService.getGestures();
-        const fetchedPositions = await DatabaseService.getAllPositions();
-
-        setGestures(fetchedGestures);
-        setPositions(fetchedPositions);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     fetchData();
-  }, []);
+  }, [gesture]);
+
 
   const filteredGestures = selectedDate
     ? gestures.filter((g) =>
-        g.created_at.startsWith(selectedDate.toISOString().split('T')[0])
-      )
+      g.created_at.startsWith(selectedDate.toISOString().split('T')[0])
+    )
     : gestures;
 
   const filteredPositions = selectedDate
     ? positions.filter((p) =>
-        p.created_at.startsWith(selectedDate.toISOString().split('T')[0])
-      )
+      p.created_at.startsWith(selectedDate.toISOString().split('T')[0])
+    )
     : positions;
 
   return (
