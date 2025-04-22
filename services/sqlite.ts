@@ -115,21 +115,19 @@ class DatabaseService {
       return;
     }
     try {
-      if (createdAt) {
-        await this.db.runAsync(
-          'INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);',
-          [latitude, longitude, createdAt]
-        );
-      } else {
-        await this.db.runAsync(
-          'INSERT INTO positions (latitude, longitude) VALUES (?, ?);',
-          [latitude, longitude]
-        );
-      }
+      const date = createdAt ? new Date(createdAt) : new Date();
+      date.setHours(date.getHours() - 4); // Adjust to UTC-4
+      const adjustedCreatedAt = date.toISOString();
+  
+      await this.db.runAsync(
+        'INSERT INTO positions (latitude, longitude, created_at) VALUES (?, ?, ?);',
+        [latitude, longitude, adjustedCreatedAt]
+      );
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la position :', error);
     }
   }
+  
 
   public async getAllPositions(): Promise<{ id: number; latitude: number; longitude: number; created_at: string }[]> {
     if (!this.db) {
