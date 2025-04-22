@@ -9,70 +9,92 @@ import {
   StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Link, useFocusEffect } from 'expo-router';
 import db from '@/services/sqlite';
 
+// Types
 type Activity = { name: string; duration: number };
-type Period = 'day' | 'week' | 'month';
+
+const ALL_GESTURES = [
+  'WALKING',
+  'WALKING_UPSTAIRS',
+  'WALKING_DOWNSTAIRS',
+  'SITTING',
+  'STANDING',
+  'LAYING',
+];
 
 export default function StatisticsScreen() {
   const [top3, setTop3] = useState<Activity[]>([]);
   const [others, setOthers] = useState<Activity[]>([]);
   const [showOthers, setShowOthers] = useState(false);
-  const [period, setPeriod] = useState<Period>('day');
 
-  const placeStyles = ['place1', 'place2', 'place3'] as const;
+  const updateData = async () => {
+    const all = await db.getGestures();
+    const today = new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await db.getActivitySummaryByPeriod(period);
-      setTop3(data.slice(0, 3));
-      setOthers(data.slice(3));
-    };
-    fetchData();
-  }, [period]);
+    const grouped: Record<string, number> = {};
+    all.forEach((g) => {
+      if (g.created_at.startsWith(today)) {
+        grouped[g.gesture] = (grouped[g.gesture] || 0) + 3;
+      }
+    });
+
+    const allActivities: Activity[] = ALL_GESTURES.map((name) => ({
+      name,
+      duration: grouped[name] || 0,
+    })).sort((a, b) => b.duration - a.duration);
+
+    const filled = [...allActivities.slice(0, 3)];
+    while (filled.length < 3) filled.push({ name: '-', duration: 0 });
+
+    setTop3(filled);
+    setOthers(allActivities.slice(3));
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      updateData();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Titre */}
-        <Text style={styles.title}>Top 3 Activités</Text>
+        <Text style={styles.title}>TOP 3 Activités</Text>
 
-        {/* Tabs en dessous du titre */}
-        <View style={styles.tabs}>
-          <PeriodTab label="Jour" value="day" current={period} onPress={setPeriod} />
-          <PeriodTab label="Semaine" value="week" current={period} onPress={setPeriod} />
-          <PeriodTab label="Mois" value="month" current={period} onPress={setPeriod} />
+        <View style={styles.podiumContainer}>
+          <View style={[styles.podiumBlock, styles.place2]}>
+            <PodiumItem activity={top3[1]} />
+          </View>
+          <View style={[styles.podiumBlock, styles.place1]}>
+            <PodiumItem activity={top3[0]} />
+          </View>
+          <View style={[styles.podiumBlock, styles.place3]}>
+            <PodiumItem activity={top3[2]} />
+          </View>
         </View>
 
-        {/* Podium */}
-        <View style={styles.podium}>
-          {top3.map((activity, index) => (
-            <View
-              key={index}
-              style={[styles.podiumBlock, styles[placeStyles[index]]]}
-            >
-              <Text style={styles.activityName}>{activity.name}</Text>
-              <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Toggle bouton */}
         <TouchableOpacity onPress={() => setShowOthers(!showOthers)} style={styles.toggleButton}>
           <Text style={styles.toggleButtonText}>
             {showOthers ? 'Cacher les autres activités' : 'Voir toutes les autres activités'}
           </Text>
         </TouchableOpacity>
 
-        {/* ScrollView pour autres activités uniquement */}
         {showOthers && (
           <ScrollView style={styles.othersScroll} nestedScrollEnabled>
             <View style={styles.othersContainer}>
               {others.map((activity, index) => (
-                <View key={index} style={styles.otherItem}>
-                  <Text style={styles.activityName}>{activity.name}</Text>
-                  <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
-                </View>
+                <Link
+                  key={index}
+                  href={{ pathname: '/specific_activity/[name]', params: { name: activity.name } }}
+                  asChild
+                >
+                  <TouchableOpacity style={styles.otherItem}>
+                    <Text style={styles.activityName}>{activity.name}</Text>
+                    <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
+                  </TouchableOpacity>
+                </Link>
               ))}
             </View>
           </ScrollView>
@@ -82,7 +104,29 @@ export default function StatisticsScreen() {
   );
 }
 
-// Format durée
+function PodiumItem({ activity }: { activity: Activity }) {
+  if (!activity || activity.name === '-') {
+    return (
+      <View style={styles.podiumTouchable}>
+        <Text style={styles.activityName}>-</Text>
+        <Text style={styles.activityTime}>0s</Text>
+      </View>
+    );
+  }
+
+  return (
+    <Link
+      href={{ pathname: '/specific_activity/[name]', params: { name: activity.name } }}
+      asChild
+    >
+      <TouchableOpacity style={styles.podiumTouchable}>
+        <Text style={styles.activityName}>{activity.name}</Text>
+        <Text style={styles.activityTime}>{formatTime(activity.duration)}</Text>
+      </TouchableOpacity>
+    </Link>
+  );
+}
+
 function formatTime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -90,36 +134,10 @@ function formatTime(seconds: number): string {
   return `${h > 0 ? `${h}h ` : ''}${m > 0 ? `${m}m ` : ''}${s}s`;
 }
 
-// Tab période
-function PeriodTab({
-  label,
-  value,
-  current,
-  onPress,
-}: {
-  label: string;
-  value: Period;
-  current: Period;
-  onPress: (p: Period) => void;
-}) {
-  const selected = current === value;
-  return (
-    <TouchableOpacity
-      onPress={() => onPress(value)}
-      style={[styles.tabButton, selected && styles.tabSelected]}
-    >
-      <Text style={[styles.tabText, selected && styles.tabTextSelected]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-// Styles
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#000',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
@@ -129,51 +147,39 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'left',
-  },
-  tabs: {
-    flexDirection: 'row',
-    gap: 8,
     marginBottom: 16,
-  },
-  tabButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#eee',
-  },
-  tabSelected: {
-    backgroundColor: '#007AFF',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  tabTextSelected: {
+    textAlign: 'left',
     color: '#fff',
-    fontWeight: '600',
   },
-  podium: {
+  podiumContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     alignItems: 'flex-end',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginBottom: 24,
   },
   podiumBlock: {
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: 8,
     width: 80,
-    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 8,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    justifyContent: 'flex-end',
+  },
+  podiumTouchable: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   activityName: {
     fontWeight: '600',
     textAlign: 'center',
+    color: '#fff',
   },
   activityTime: {
     fontSize: 12,
-    color: '#555',
+    color: '#bbb',
     textAlign: 'center',
   },
   place1: {
@@ -190,7 +196,7 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     marginBottom: 12,
-    backgroundColor: '#eee',
+    backgroundColor: '#222',
     padding: 12,
     borderRadius: 8,
   },
@@ -198,16 +204,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: '500',
+    color: '#fff',
   },
   othersScroll: {
-    maxHeight: 200,
+    maxHeight: 300,
   },
   othersContainer: {
     paddingBottom: 8,
   },
   otherItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#111',
+    borderColor: '#333',
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });

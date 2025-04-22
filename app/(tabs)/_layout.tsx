@@ -55,7 +55,11 @@ export default function TabLayout() {
     name="statistics"
     options={{
       title: 'Statistics',
-      tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+      tabBarIcon: ({ color }) => (
+        <FontAwesome5 name="trophy" size={24} color={color} />
+      ),
+
+      
     }}
   />
 </Tabs>
