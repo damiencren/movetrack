@@ -12,6 +12,7 @@ export const BACKGROUND_PREDICTION_TASK = 'background-prediction-task';
 
 // Tâche d'arrière-plan définie pour fonctionner hors React
 TaskManager.defineTask(BACKGROUND_PREDICTION_TASK, async () => {
+
   try {
     const prediction = await predict();
 
@@ -30,7 +31,7 @@ TaskManager.defineTask(BACKGROUND_PREDICTION_TASK, async () => {
 // Configuration de Background Fetch
 const registerBackgroundFetchAsync = async () => {
   return BackgroundFetch.registerTaskAsync(BACKGROUND_PREDICTION_TASK, {
-    minimumInterval: 15 * 60, // 15 minutes
+    minimumInterval: 5, // 15 minutes
     stopOnTerminate: false, // Android only
     startOnBoot: true, // Android only
   });
