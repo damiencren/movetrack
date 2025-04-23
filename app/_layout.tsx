@@ -7,6 +7,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { SensorProvider } from '../contexts/SensorContext';
 import SensorManager from '../components/SensorManager';
+import { registerBackgroundFetch } from '../services/backgroundTask';
+
 
 import "../global.css"
 
@@ -23,6 +25,11 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
   
+
+  useEffect(() => {
+    console.log('registerBackgroundFetch');
+    registerBackgroundFetch();
+  }, []);
 
   useEffect(() => {
     async function prepare() {
