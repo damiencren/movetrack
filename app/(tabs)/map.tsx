@@ -140,17 +140,25 @@ export default function MapScreen() {
               ))}
             </View>
           )}
-    
-          {showDatePicker && (
-            <DateTimePicker
-              value={selectedDate || new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'inline' : 'default'}
-              onChange={(event, date) => {
-                if (date) setSelectedDate(date);
-              }}
-            />
-          )}
+          <TouchableOpacity
+  style={styles.datePickerContainer}
+  onPress={() => setShowDatePicker(true)} // Show the date picker when the button is pressed
+>
+  <Text>Select Date</Text>
+</TouchableOpacity>
+{showDatePicker && (
+  <DateTimePicker
+    value={selectedDate || new Date()}
+    mode="date"
+    display={Platform.OS === 'ios' ? 'inline' : 'default'}
+    onChange={(event, date) => {
+      setShowDatePicker(false); // Hide the date picker
+      if (date) {
+        setSelectedDate(date); // Update the selected date if a date is chosen
+      }
+    }}
+  />
+)}
         </View>
       );
     }
