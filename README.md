@@ -1,50 +1,96 @@
-# Welcome to your Expo app 👋
+# MoveTrack
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This project is a mobile application developed with React Native, integrating a deep learning model to detect user movements, such as walking or lying down. It aligns with my academic program.
 
-## Get started
+### 📌 Features
 
-1. Install dependencies
+- Real-time motion detection using smartphone sensors (accelerometer and gyroscope).
 
-   ```bash
-   npm install
-   ```
+- Deep learning model based on **LSTM** and **CNN** for accurate sequence analysis.
 
-2. Start the app
+- Simple and intuitive interface displaying real-time predictions, statistics and map.
 
-   ```bash
-    npx expo start
-   ```
+- Deployment via **Expo (EAS)** for simplified installation.
 
-In the output, you'll find options to open the app in a
+### 📌 Prerequisites
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Before installing and running the project, make sure you have the following tools installed:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+- **Node.js** - [Download & Install](https://nodejs.org/)
+- **Yarn** - Install it globally using:
 ```bash
-npm run reset-project
+npm install -g yarn
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 🚀 Installation & Execution
 
-## Learn more
+1. Clone the repository
+```bash
+git clone https://github.com/damiencren/movetrack
+cd movetrack
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+2. Install dependencies
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+yarn install
+```
 
-## Join the community
+3. Start the application in development mode
 
-Join our community of developers creating universal apps.
+> **💡 Note :** Dont forget to press s to switch from *development build* to *Expo GO*.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx expo start
+```
+
+### How to use it
+
+To use your own models, place them in the assets/models/* folder and ensure they are referenced in *index.tsx*. 
+> **💡 Note :** This example uses two files for the weights because they are too large to be in one part
+
+```typescript
+  const modelJson = require("../../assets/model/lstm/model.json");
+  const modelWeights = [require("../../assets/model/lstm/group1-shard1of2.bin"),require("../../assets/model/lstm/group1-shard2of2.bin"),];
+```
+
+To work with the application in development mode, use the following command
+
+> **💡 Note :** We use npx to avoid installing the Expo and EAS CLI.
+
+> **💡 Note :** Dont forget to press s to switch from *development build* to *Expo GO*.
+
+```bash
+npx expo start
+```
+If you want to generate the APK, you need to log into your EAS account using the command
+```bash
+npx eas-cli login
+```
+Then, create the project with this command
+```bash
+npx eas-cli init
+```
+And use this command to build the APK
+```bash
+npx eas-cli build --profile development --platform android 
+```
+The APK should be accessible on your EAS portal at https://expo.dev/. Use the APK to install the application on your phone and then open it.
+
+<p align="center">
+  <img src="docs/screen1.jpg" width="30%" />
+  <img src="docs/screen2.jpg" width="30%" />
+  <img src="docs/screen3.jpg" width="30%" />
+</p>
+
+### 📌 Future Improvements
+
+- Optimizing model performance on mobile.
+
+- Exploring hybrid architectures combining CNN + LSTM.
+
+- Improved calibration for better prediction accuracy.
+
+### 📜 License
+
+- This project is licensed under the MIT License.
