@@ -4,10 +4,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import * as Location from 'expo-location';
 import 'react-native-reanimated';
 import { SensorProvider } from '../contexts/SensorContext';
 import SensorManager from '../components/SensorManager';
 import { registerBackgroundFetch } from '../services/backgroundTask';
+import DatabaseService from '@/services/sqlite'; // Import the DatabaseService
 
 
 import "../global.css"
@@ -18,6 +20,7 @@ import { ModelControlProvider } from '@/contexts/ModelControlContext';
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
+import GeolocationService from '@/services/geolocalisationservice';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -35,9 +38,18 @@ export default function RootLayout() {
     async function prepare() {
       if (loaded) {
         SplashScreen.hideAsync();
+
+        // Start geolocation logging
+        await GeolocationService.startLogging(5000); // Log every 5 seconds
       }
     }
+
     prepare();
+
+    // Cleanup on unmount
+    return () => {
+      GeolocationService.stopLogging();
+    };
   }, [loaded]);
 
   if (!loaded) {
