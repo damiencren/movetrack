@@ -30,10 +30,8 @@ TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
             const model = await tf.loadGraphModel(bundleResourceIO(require('../assets/model/cnn/model.json'), require('../assets/model/cnn/group1-shard1of1.bin')));
             const prediction = await performPrediction(model, sensorData, mean, std);
             if (prediction !== null) {
-                await DatabaseService.addGesture("Back" + gestures[prediction]);
+                await DatabaseService.addGesture(gestures[prediction]);
             }
-            await DatabaseService.addGesture("BackTesting");
-            
         }
 
         return BackgroundFetch.BackgroundFetchResult.NewData;
