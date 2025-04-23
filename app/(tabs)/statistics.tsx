@@ -59,9 +59,9 @@ export default function StatisticsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} className='dark:bg-foreground bg-background'>
       <View style={styles.container}>
-        <Text style={styles.title}>TOP 3 Activités</Text>
+        <Text style={styles.title} className='dark:color-background color-foreground'>TOP 3 Activités</Text>
 
         <View style={styles.podiumContainer}>
           <View style={[styles.podiumBlock, styles.place2]}>
@@ -137,7 +137,6 @@ function formatTime(seconds: number): string {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   container: {
@@ -149,7 +148,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'left',
-    color: '#fff',
   },
   podiumContainer: {
     flexDirection: 'row',
