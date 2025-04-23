@@ -77,12 +77,6 @@ npx eas-cli build --profile development --platform android
 ```
 The APK should be accessible on your EAS portal at https://expo.dev/. Use the APK to install the application on your phone and then open it.
 
-<p align="center">
-  <img src="docs/screen1.jpg" width="30%" />
-  <img src="docs/screen2.jpg" width="30%" />
-  <img src="docs/screen3.jpg" width="30%" />
-</p>
-
 ### 📌 Future Improvements
 
 - Optimizing model performance on mobile.
