@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   },
   activityTime: {
     fontSize: 12,
-    color: '#bbb',
+    color: '#000',
     textAlign: 'center',
   },
   place1: {
