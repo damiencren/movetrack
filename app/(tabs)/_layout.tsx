@@ -51,6 +51,17 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tabs>
+    <Tabs.Screen
+    name="statistics"
+    options={{
+      title: 'Statistics',
+      tabBarIcon: ({ color }) => (
+        <FontAwesome5 name="trophy" size={24} color={color} />
+      ),
+
+      
+    }}
+  />
+</Tabs>
   );
 }
