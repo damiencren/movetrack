@@ -29,7 +29,7 @@ export default function TabLayout() {
         }),
       }}>
       <Tabs.Screen
-        name="prediction"
+        name="index"
         options={{
           tabBarLabel: 'Prédiction',
           tabBarIcon: ({ color, size }) => (
