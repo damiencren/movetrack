@@ -41,24 +41,24 @@ export default function ActivityDetail() {
   }, [name, period]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>{formatLabel(name)}</Text>
+    <SafeAreaView style={styles.container} className='dark:bg-foreground bg-background'>
+      <Text style={styles.title} className='dark:color-background color-foreground'>{formatLabel(name)}</Text>
 
-      <View style={styles.periodTabs}>
+      <View style={styles.periodTabs} className='dark:bg-foreground bg-background'>
         {['day', 'week', 'month'].map((p) => (
           <TouchableOpacity
             key={p}
             onPress={() => setPeriod(p as 'day' | 'week' | 'month')}
             style={[styles.tab, period === p && styles.tabSelected]}
           >
-            <Text style={[styles.tabText, period === p && styles.tabTextSelected]}>
+            <Text style={[styles.tabText, period === p && styles.tabTextSelected]} className='color-background dark:color-foreground'>
               {p === 'day' ? '1j' : p === 'week' ? '7j' : '30j'}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.detailsTitle}>Temps par jour</Text>
+      <Text style={styles.detailsTitle} className='dark:color-background color-foreground'>Temps par jour</Text>
       <ScrollView style={styles.scrollContainer}>
         {data.length === 0 ? (
           <Text style={styles.noData}>Aucune donnée disponible</Text>
@@ -67,11 +67,11 @@ export default function ActivityDetail() {
             const width = Math.max((item.duration / MAX_SECONDS) * (SCREEN_WIDTH - 64), 2);
             return (
               <View key={idx} style={styles.entryRow}>
-                <Text style={styles.entryDate}>{item.date}</Text>
+                <Text style={styles.entryDate} className='dark:color-background color-foreground'>{item.date}</Text>
                 <View style={styles.barContainer}>
                   <View style={[styles.bar, { width }]} />
                 </View>
-                <Text style={styles.entryDuration}>{formatTime(item.duration)}</Text>
+                <Text style={styles.entryDuration} className='dark:color-background color-foreground'>{formatTime(item.duration)}</Text>
               </View>
             );
           })
@@ -93,9 +93,9 @@ function formatLabel(label: string | string[] | undefined): string {
   return label.charAt(0).toUpperCase() + label.slice(1).toLowerCase();
 }
 
-export const options = ({ params }: { params: Record<string, any> }) => {
+export const options = () => {
   return {
-    title: formatLabel(params.name),
+    title: "Details de l'activité",
     headerShown: true,
   };
 };
@@ -103,14 +103,12 @@ export const options = ({ params }: { params: Record<string, any> }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
     paddingTop: Platform.OS === 'android' ? 40 : 20,
     paddingHorizontal: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 12,
   },
   periodTabs: {
@@ -128,7 +126,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   tabText: {
-    color: '#ccc',
     fontSize: 14,
   },
   tabTextSelected: {
@@ -139,7 +136,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   detailsTitle: {
-    color: '#fff',
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
@@ -148,7 +144,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   entryDate: {
-    color: '#ccc',
     marginBottom: 4,
   },
   barContainer: {
@@ -164,7 +159,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   entryDuration: {
-    color: '#ccc',
     fontSize: 12,
     textAlign: 'right',
   },
