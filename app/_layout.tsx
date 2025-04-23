@@ -8,6 +8,7 @@ import * as Location from 'expo-location';
 import 'react-native-reanimated';
 import { SensorProvider } from '../contexts/SensorContext';
 import SensorManager from '../components/SensorManager';
+import { registerBackgroundFetch } from '../services/backgroundTask';
 import DatabaseService from '@/services/sqlite'; // Import the DatabaseService
 
 
@@ -26,6 +27,12 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+  
+
+  useEffect(() => {
+    console.log('registerBackgroundFetch');
+    registerBackgroundFetch();
+  }, []);
 
   useEffect(() => {
     async function prepare() {

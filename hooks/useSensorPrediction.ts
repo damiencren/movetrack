@@ -4,6 +4,17 @@ import ButterworthFilter from './butterworthFilter';
 import * as tf from '@tensorflow/tfjs';
 import { bundleResourceIO } from '@tensorflow/tfjs-react-native';
 import { useModelControl } from '@/contexts/ModelControlContext';
+import { performPrediction } from '@/services/predictionService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const saveSensorData = async (data: number[][]) => {
+    try {
+        const jsonValue = JSON.stringify(data);
+        await AsyncStorage.setItem('sensorData', jsonValue);
+    } catch (e) {
+        console.error('Erreur de sauvegarde des données des capteurs:', e);
+    }
+};
 
 const useSensorPrediction = (modelConfig: {
     modelJson: any;
@@ -69,38 +80,14 @@ const useSensorPrediction = (modelConfig: {
 
         if (!bufferLock.current) {
             dataBuffer.current = [...dataBuffer.current, newData].slice(-BUFFER_SIZE);
+            saveSensorData(dataBuffer.current);
         }
     }, []);
 
     // Prédiction
     const predict = useCallback(async () => {
-        if (!modelRef.current || dataBuffer.current.length < BUFFER_SIZE) return null;
-
-        try {
-            // Récupérer la fenêtre directement depuis le buffer
-            const window = dataBuffer.current.slice(-BUFFER_SIZE);
-
-            const inputTensor = tf.tensor3d([window]);
-            const processedTensor = inputTensor.sub(mean).div(std);
-
-            const prediction = modelRef.current.predict(processedTensor);
-
-            if (prediction instanceof tf.Tensor) {
-                const output = await prediction.data();
-                const predictedIndex = output.indexOf(Math.max(...output));
-
-                // Nettoyer le buffer après prédiction
-                dataBuffer.current = dataBuffer.current.slice(-64);
-
-                tf.dispose([inputTensor, processedTensor, prediction]);
-                return predictedIndex;
-            }
-            return null;
-        } catch (error) {
-            console.error('Erreur de prédiction:', error);
-            return null;
-        }
-    }, [mean, std]); // <-- Ajouter les dépendances nécessaires
+        return await performPrediction(modelRef.current, dataBuffer.current, mean, std);
+    }, [mean, std]); 
 
     // Initialisation
     useEffect(() => {

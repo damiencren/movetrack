@@ -7,6 +7,7 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 
 export default function TabLayout() {
@@ -31,20 +32,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="prediction"
-        options={{
           tabBarLabel: 'Prédiction',
           tabBarIcon: ({ color, size }) => (
             <FontAwesome5 name="brain" size={24} color={color} />
@@ -52,10 +39,19 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="statistics"
+        options={{
+          title: 'Statistics',
+          tabBarIcon: ({ color }) => (
+            <FontAwesome5 name="trophy" size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="map"
         options={{
           title: 'Map',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
+          tabBarIcon: ({ color }) => <FontAwesome name="map-marker" size={24} color="black" />,
         }}
       />
     </Tabs>
